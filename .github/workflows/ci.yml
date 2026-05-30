@@ -31,6 +31,9 @@ jobs:
       - name: Full test suite
         run: npm test
 
+      - name: Selftest every layer end to end
+        run: npm run selftest
+
       - name: Reproduce all deterministic vectors and reported figures
         run: npm run reproduce
 

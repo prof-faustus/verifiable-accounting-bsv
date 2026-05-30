@@ -33,11 +33,17 @@ The studies run a small **CI point** in CI (deterministic, byte-stable JSON that
 262144}; assurance M up to 100000) are run on demand and print machine-readable
 lines.
 
-- Storage study seed and points: see `packages/simstore`.
-- Assurance study seed and points: see `packages/simstudy`.
+- Storage study: seed `305419896` (0x12345678); report points
+  N ∈ {1024, 16384, 262144}; CI point N = 256 (vector `storage_256.json`).
+- Assurance study: seed `1592594996` (0x5eed1234); report point M = 100000; CI
+  point M = 240 (vector `simstudy_240.json`).
 - Predetermined level rule for the studies:
   `k = max(1, min(height − 1, floor(log2(N) / 2)))`, recorded in each study's
   output.
+- For the large report points the proof store anchors a bounded query sample
+  (≤ 512 items) for the inclusion/selective-disclosure measurements, while the
+  AR roll-forward recomputation covers the whole population; the CI points anchor
+  every record.
 
 ## Local-timing note
 
