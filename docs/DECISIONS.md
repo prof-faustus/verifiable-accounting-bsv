@@ -86,6 +86,18 @@ is unambiguous; documented in `packages/evidence` source.
   split near the middle of the tree balances the lower (per-item) shard against
   the shared upper shard, which is what the storage study measures.
 
+## D6a — Shared upper portion is the proof-assistance labels
+
+The proof store keeps each item's **lower** shard (leaf → level-k node) per item,
+and stores the **proof-assistance labels** (the level-k node labels) **once per
+root**. An item's **upper** shard (level-k node → root) is *derived on demand* as
+a Merkle path within the labels, never stored per item. This is why "shared upper
+portions are stored once per root": the labels are the shared upper structure,
+and the per-item upper path is a function of them. The assisted
+(selective-disclosure) flow does not use the upper path at all — it folds the
+lower shard to a level-k node, checks it against the published label, and checks
+the labels independently hash to the anchored root.
+
 ## D7 — secp256k1 naming
 
 The curve is referred to only as "the BSV curve" / "Bitcoin's curve". No
