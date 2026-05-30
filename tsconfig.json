@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/bsv" },
+    { "path": "packages/merkle" },
+    { "path": "packages/proofstore" },
+    { "path": "packages/evidence" },
+    { "path": "packages/api" },
+    { "path": "packages/cli" },
+    { "path": "packages/simstore" },
+    { "path": "packages/simstudy" }
+  ]
+}
