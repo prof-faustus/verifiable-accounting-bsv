@@ -12,7 +12,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
-    "test": "node --test test",
+    "test": "node --test \"test/**/*.test.ts\"",
     "lint": "tsc -b"
   },
   "dependencies": {
