@@ -1,0 +1,11 @@
+
+> verifiable-accounting-bsv@0.1.0 selftest
+> node packages/cli/dist/index.js selftest
+
+PASS bsv: genuine block header hashes to its published block hash and validates
+PASS merkle: reconstructs the genuine block merkle root
+PASS proofstore: anchor/query/verify and selective disclosure hold; trusted-operational refused
+PASS evidence: field tree, per-field disclosure, and recomputation check hold
+PASS api: config, auth, health, and the anchor endpoint respond
+PASS studies: storage and assurance studies pass their CI checks
+selftest: all layers passed
