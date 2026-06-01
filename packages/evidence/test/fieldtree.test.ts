@@ -6,7 +6,10 @@ import {
   fieldLeaves,
   fieldTreeRoot,
   buildAccountingTx,
-  parseAccountingTx,
+  parseCommitmentEnvelope,
+  serialiseRetainedRecord,
+  parseRetainedRecord,
+  withNonces,
   discloseField,
   verifyDisclosedField,
   bigInvoiceTransaction,
@@ -34,17 +37,40 @@ test('D.4 T-ft-1 fieldLeaves deterministic; fieldTreeRoot == computeRoot(fieldLe
   assert.equal(HashOps.equals(root, unwrap(computeRoot(a))), true);
 });
 
-test('D.4 T-ft-2 buildAccountingTx then parseAccountingTx round-trips a 1000-field invoice; no OP_RETURN', () => {
-  const tx = bigInvoiceTransaction(1000);
+test('D.4 T-ft-2 buildAccountingTx carries ONLY the commitment on-chain (no field values); no OP_RETURN', () => {
+  const tx = { kind: 'invoice' as const, fields: withNonces(bigInvoiceTransaction(1000).fields) };
   const built = unwrap(buildAccountingTx(tx));
   for (const s of built.lockingScripts) assert.equal(containsOpReturn(s), false);
-  const parsed = unwrap(parseAccountingTx(built.lockingScripts));
+  // The on-chain envelope parses to the commitment only: kind, field count, root — NOT the fields.
+  const commit = unwrap(parseCommitmentEnvelope(built.lockingScripts));
+  assert.equal(commit.kind, 'invoice');
+  assert.equal(commit.fieldCount, 1000);
+  assert.equal(HashOps.equals(commit.root, built.fieldTreeRoot), true);
+  // Confidentiality: no undisclosed field VALUE appears anywhere in the on-chain scripts.
+  const onChain = new Uint8Array(built.lockingScripts.flatMap((s) => Array.from(s)));
+  for (let i = 0; i < tx.fields.length; i++) {
+    const v = tx.fields[i]!.value;
+    if (v.length >= 4) assert.equal(contains(onChain, v), false);
+  }
+});
+
+test('D.4 T-ft-2b the OFF-CHAIN retained record round-trips all 1000 fields', () => {
+  const tx = { kind: 'invoice' as const, fields: withNonces(bigInvoiceTransaction(1000).fields) };
+  const bundle = serialiseRetainedRecord(tx);              // held by the record-holder, OFF the ledger
+  const parsed = unwrap(parseRetainedRecord(bundle));
   assert.equal(parsed.kind, 'invoice');
   assert.equal(parsed.fields.length, 1000);
   for (let i = 0; i < tx.fields.length; i++) {
     assert.equal(parsed.fields[i]!.tag, tx.fields[i]!.tag);
     assert.deepEqual(Array.from(parsed.fields[i]!.value), Array.from(tx.fields[i]!.value));
+    assert.deepEqual(Array.from(parsed.fields[i]!.nonce!), Array.from(tx.fields[i]!.nonce!));
   }
+});
+
+test('D.4 T-ft-2c buildAccountingTx rejects a field with no nonce (confidentiality-preserving path)', () => {
+  const tx = bigInvoiceTransaction(4); // no nonces attached
+  const r = buildAccountingTx(tx);
+  assert.equal(r.ok, false);
 });
 
 test('D.4 T-ft-3 disclose one field of a 1000-field invoice; no other field value appears', () => {

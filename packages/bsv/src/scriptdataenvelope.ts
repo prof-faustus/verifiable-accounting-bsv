@@ -1,7 +1,11 @@
-// Carry data as pushdata inside script. OP_RETURN IS NEVER USED. The envelope is
-//   OP_FALSE OP_IF <minimal-pushdata payload> OP_ENDIF
-// The guard (OP_FALSE OP_IF ... OP_ENDIF) means the pushed bytes are never
-// executed, so the output stays spendable while the data remains recoverable.
+// Carry data as pushdata inside script. OP_RETURN IS NEVER USED. The locking
+// script is a genuine spend condition followed by an inert data branch:
+//   <spend condition> OP_FALSE OP_IF <minimal-pushdata payload> OP_ENDIF
+// The spend condition (e.g. <pubkey> OP_CHECKSIG) preserves a valid way to spend
+// the output; the OP_FALSE-guarded branch is never executed, so the data is inert
+// yet recoverable by parsing. A default pay-to-public-key spend condition is used
+// when the caller does not supply one, so the output is never an unspendable
+// data-only output.
 import type { Result } from './result.js';
 import { ok, err } from './result.js';
 import type { BsvError } from './errors.js';
@@ -14,6 +18,7 @@ const OP_FALSE = 0x00;
 const OP_IF = 0x63;
 const OP_ENDIF = 0x68;
 const OP_RETURN = 0x6a;
+const OP_CHECKSIG = 0xac;
 const OP_PUSHDATA1 = 0x4c;
 const OP_PUSHDATA2 = 0x4d;
 const OP_PUSHDATA4 = 0x4e;
@@ -37,18 +42,57 @@ function encodePush(payload: Uint8Array): Uint8Array {
   );
 }
 
-export function buildScriptDataEnvelope(payload: Uint8Array): Result<{ lockingScript: Script }, BsvError> {
+// The inert data branch on its own: OP_FALSE OP_IF <payload> OP_ENDIF.
+export function buildInertDataBranch(payload: Uint8Array): Uint8Array {
+  return concat(Uint8Array.of(OP_FALSE, OP_IF), encodePush(payload), Uint8Array.of(OP_ENDIF));
+}
+
+// A default, genuinely spendable spend condition: <33-byte pubkey> OP_CHECKSIG.
+// A placeholder key is used; deployments substitute the real key. The point for
+// this artefact is that a valid spend path exists, so the output is not an
+// unspendable data-only output.
+const DEFAULT_PUBKEY = (() => {
+  const k = new Uint8Array(33);
+  k[0] = 0x02; // compressed-pubkey prefix
+  for (let i = 1; i < 33; i++) k[i] = i;
+  return k;
+})();
+
+function defaultSpendCondition(): Uint8Array {
+  return concat(encodePush(DEFAULT_PUBKEY), Uint8Array.of(OP_CHECKSIG));
+}
+
+export function buildScriptDataEnvelope(
+  payload: Uint8Array,
+  spendCondition?: Uint8Array,
+): Result<{ lockingScript: Script }, BsvError> {
   if (payload.length > MAX_ENVELOPE_PAYLOAD) {
     return err(envelopeOversize(MAX_ENVELOPE_PAYLOAD, payload.length));
   }
-  const bytes = concat(Uint8Array.of(OP_FALSE, OP_IF), encodePush(payload), Uint8Array.of(OP_ENDIF));
+  const spend = spendCondition ?? defaultSpendCondition();
+  const bytes = concat(spend, buildInertDataBranch(payload));
   return ok({ lockingScript: scriptFromBytes(bytes) });
 }
 
 export function recognise(lockingScript: Script): Result<Uint8Array, BsvError> {
   const b = scriptToBytes(lockingScript);
-  if (b.length < 3 || b[0] !== OP_FALSE || b[1] !== OP_IF) return err(envelopeNotRecognised());
-  let off = 2;
+  // Find the inert data branch: the OP_FALSE OP_IF ... OP_ENDIF segment, which may
+  // be preceded by a spend condition. Scan for OP_FALSE OP_IF at a chunk boundary.
+  let start = -1;
+  {
+    let off = 0;
+    while (off < b.length) {
+      if (b[off] === OP_FALSE && b[off + 1] === OP_IF) { start = off; break; }
+      const op = b[off] as number;
+      off += 1;
+      if (op >= 1 && op <= 75) off += op;
+      else if (op === OP_PUSHDATA1) off += 1 + (b[off] ?? 0);
+      else if (op === OP_PUSHDATA2) off += 2 + ((b[off] ?? 0) | ((b[off + 1] ?? 0) << 8));
+      else if (op === OP_PUSHDATA4) off += 4 + (((b[off] ?? 0) | ((b[off + 1] ?? 0) << 8) | ((b[off + 2] ?? 0) << 16) | ((b[off + 3] ?? 0) << 24)) >>> 0);
+    }
+  }
+  if (start < 0 || b[start] !== OP_FALSE || b[start + 1] !== OP_IF) return err(envelopeNotRecognised());
+  let off = start + 2;
   const op = b[off] as number;
   let len: number;
   if (op >= 1 && op <= 75) {
@@ -72,7 +116,6 @@ export function recognise(lockingScript: Script): Result<Uint8Array, BsvError> {
   if (off + len + 1 > b.length) return err(envelopeNotRecognised());
   const payload = b.subarray(off, off + len);
   if (b[off + len] !== OP_ENDIF) return err(envelopeNotRecognised());
-  if (off + len + 1 !== b.length) return err(envelopeNotRecognised());
   return ok(Uint8Array.from(payload));
 }
 

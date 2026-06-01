@@ -1,8 +1,15 @@
 // Deterministic synthetic population for the storage study. The leaves stand in
 // for committed-accounting transaction leaves (documented as such); they are
-// produced from a fixed seed so the study is fully reproducible.
+// produced from a fixed seed so the study is fully reproducible. Each leaf is
+// NONCE-BLINDED to match the specified artefact (Section 5.1): the preimage is a
+// canonical field encoding carrying an 8-byte value and a 32-byte per-field nonce.
+// Nonce-blinding changes only the bytes hashed at each leaf; the number of leaves,
+// the tree height, the proof sizes, and the node count are unchanged, so the
+// measured storage and retrieval figures are unaffected by the nonce, while the
+// measured artefact is now the nonced one.
 import type { Hash, Txid } from '@vaa/bsv';
 import { hashLeaf, TxidOps } from '@vaa/bsv';
+import { serialiseField, type AccountingField } from '@vaa/evidence';
 import type { IndexKey } from '@vaa/proofstore';
 
 export const SEED = 0x12345678; // recorded here and in docs/REPRODUCIBILITY.md
@@ -20,9 +27,12 @@ export function deterministicLeaves(seed: number, n: number): Hash[] {
   const next = prng(seed);
   const out: Hash[] = [];
   for (let i = 0; i < n; i++) {
-    const b = new Uint8Array(8);
-    for (let j = 0; j < 8; j++) b[j] = next() & 0xff;
-    out.push(hashLeaf(b));
+    const value = new Uint8Array(8);
+    for (let j = 0; j < 8; j++) value[j] = next() & 0xff;
+    const nonce = new Uint8Array(32);
+    for (let j = 0; j < 32; j++) nonce[j] = next() & 0xff;
+    const field: AccountingField = { tag: 'f', value, nonce };
+    out.push(hashLeaf(serialiseField(field)));
   }
   return out;
 }

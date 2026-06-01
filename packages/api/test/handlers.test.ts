@@ -2,15 +2,31 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { HashOps } from '@vaa/bsv';
 import { computeRoot, merkleProof } from '@vaa/merkle';
-import { fieldTreeRoot, bigInvoiceTransaction } from '@vaa/evidence';
+import { fieldTreeRoot, bigInvoiceTransaction, withNonces } from '@vaa/evidence';
 import { anchor, prove, query, verify } from '@vaa/api';
 import { buildContext, makeKey } from './app.mjs';
 
-test('E.7 T-h-1 anchor returns a field-tree root that recomputes', () => {
+test('E.7 T-h-1 anchor returns a field-tree root for the committed (nonced) fields', () => {
   const { ctx } = buildContext();
+  // The server attaches per-field nonces at commit; the returned root is over the
+  // nonced fields, so it differs from the un-nonced root (confidentiality blinding).
   const tx = bigInvoiceTransaction(25);
   const r = anchor({ tx }, ctx);
   assert.equal(r.ok, true);
+  if (r.ok) {
+    assert.equal(typeof r.value.fieldTreeRootHex, 'string');
+    assert.equal(r.value.fieldTreeRootHex.length, 64);
+    // it must NOT equal the un-nonced root (proves blinding is applied)
+    assert.notEqual(r.value.fieldTreeRootHex, HashOps.toDisplayHex(fieldTreeRoot(tx).value));
+  }
+});
+
+test('E.7 T-h-1b a fully nonced tx anchors to exactly its own field-tree root', () => {
+  const { ctx } = buildContext();
+  const tx = { kind: 'invoice' as const, fields: withNonces(bigInvoiceTransaction(25).fields) };
+  const r = anchor({ tx }, ctx);
+  assert.equal(r.ok, true);
+  // already-nonced fields are left unchanged by the server, so the root matches
   if (r.ok) assert.equal(r.value.fieldTreeRootHex, HashOps.toDisplayHex(fieldTreeRoot(tx).value));
 });
 
