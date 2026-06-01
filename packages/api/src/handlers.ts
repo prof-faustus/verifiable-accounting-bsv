@@ -7,7 +7,7 @@ import type { HeaderChain } from '@vaa/bsv';
 import { merkleProof, computeRoot, proveAgainstChain } from '@vaa/merkle';
 import type { ProofStore, StoredProof, IndexKey } from '@vaa/proofstore';
 import { serializeKey } from '@vaa/proofstore';
-import { buildAccountingTx } from '@vaa/evidence';
+import { buildAccountingTx, withNonces } from '@vaa/evidence';
 import type { AppConfig } from './config.js';
 import type { AuditLog } from './auditlog.js';
 import type { Logger } from './logger.js';
@@ -70,7 +70,7 @@ function storedProofToJson(s: StoredProof): StoredProofJson {
 }
 
 export function anchor(parsed: ParsedAnchor, _ctx: AppContext): Result<{ fieldTreeRootHex: string; envelopeScriptsHex: string[] }, ApiError> {
-  const built = buildAccountingTx(parsed.tx);
+  const built = buildAccountingTx({ kind: parsed.tx.kind, fields: withNonces(parsed.tx.fields) });
   if (!built.ok) return err(badRequest('accountingTransaction', built.error.message));
   return ok({
     fieldTreeRootHex: HashOps.toDisplayHex(built.value.fieldTreeRoot),

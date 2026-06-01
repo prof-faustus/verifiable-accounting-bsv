@@ -8,4 +8,5 @@ export { buildTree, computeRoot, leafIndexOfTxid } from './tree.js';
 export type { MerkleProof } from './proof.js';
 export { merkleProof } from './proof.js';
 
-export { reconstructRoot, verifyProof, proveAgainstChain, heightForLeafCount } from './verify.js';
+export { reconstructRoot, verifyProof, proveAgainstChain, verifyAnchoredField, heightForLeafCount } from './verify.js';
+export type { AnchoredFieldInput } from './verify.js';

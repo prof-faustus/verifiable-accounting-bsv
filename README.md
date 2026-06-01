@@ -1,6 +1,6 @@
 # verifiable-accounting-bsv
 
-A BSV-native, enterprise-grade system for producing **admissible, examinable
+A BSV-native, enterprise-grade system for producing **examinable, examinable
 audit evidence** about real accounting records.
 
 This is accounting and audit-evidence infrastructure — for financial audit, tax,
@@ -9,8 +9,7 @@ and assurance — not a cryptography project. The evidence mechanism is
 actual accounting records needed for that specific assertion (and the proof that
 they are genuine and on-chain) while revealing nothing about any other record.
 
-Bitcoin (BSV) — the original Bitcoin protocol — is the entire technical universe
-of this project. Verification terminates in a validated BSV block-header chain.
+The implementation targets Bitcoin (BSV) because it supports low-cost script-carried commitments and public header-chain verification. Verification terminates in a validated BSV block-header chain.
 
 ## Core data model
 

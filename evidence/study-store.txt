@@ -2,5 +2,5 @@
 > verifiable-accounting-bsv@0.1.0 study:store
 > node packages/simstore/dist/main.js --ci
 
-STORAGE {"study":"storage","seed":305419896,"n":256,"q":256,"treeHeight":8,"predeterminedLevel":4,"baselineFullProofBytes":65536,"baselineRederivedBytes":65536,"shardedStoredBytes":36364,"duplicateAvoidedBytes":29172,"avoidedRatioPpm":554871,"proofAssistanceBytesPerRoot":524,"retrievalAdversarialBytes":280,"retrievalAssistedBytes":140,"verifyTime":{"medianMs":0.06379999999990105,"minMs":0.051300000000082946,"maxMs":0.373899999999594},"verifyWithAssistanceTime":{"medianMs":0.12770000000000437,"minMs":0.10969999999997526,"maxMs":0.35429999999996653}}
-STORAGE_VECTOR_WRITTEN vectors\study\storage_256.json
+STORAGE {"study":"storage","seed":305419896,"n":256,"q":256,"treeHeight":8,"predeterminedLevel":4,"baselineFullProofBytes":65536,"baselineRederivedBytes":65536,"shardedStoredBytes":36364,"duplicateAvoidedBytes":29172,"avoidedRatioPpm":554871,"proofAssistanceBytesPerRoot":524,"retrievalAdversarialBytes":280,"retrievalAssistedBytes":140,"verifyTime":{"medianMs":0.06627800000023853,"minMs":0.062132999999903404,"maxMs":0.39165200000024925},"verifyWithAssistanceTime":{"medianMs":0.160769000000073,"minMs":0.14712099999997008,"maxMs":2.2153729999999996}}
+STORAGE_VECTOR_WRITTEN /tmp/bsvfix/vectors/study/storage_256.json

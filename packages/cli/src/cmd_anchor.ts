@@ -1,7 +1,7 @@
 // anchor --accounting-tx <file.json> -> field-tree root + one-tx envelope hex.
 import { parseArgs } from 'node:util';
 import { ScriptOps, HashOps } from '@vaa/bsv';
-import { buildAccountingTx } from '@vaa/evidence';
+import { buildAccountingTx, withNonces } from '@vaa/evidence';
 import { parseAnchorRequest } from '@vaa/api';
 import { readJsonFile, printErr, printJson } from './args.js';
 import { badArgs, failure } from './errors.js';
@@ -28,7 +28,7 @@ export function runAnchor(argv: string[]): number {
     printErr(failure(parsed.error.message));
     return 1;
   }
-  const built = buildAccountingTx(parsed.value.tx);
+  const built = buildAccountingTx({ kind: parsed.value.tx.kind, fields: withNonces(parsed.value.tx.fields) });
   if (!built.ok) {
     printErr(failure(built.error.message));
     return 1;

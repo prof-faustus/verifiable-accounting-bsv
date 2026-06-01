@@ -21,6 +21,7 @@
   "dependencies": {
     "@vaa/bsv": "*",
     "@vaa/merkle": "*",
-    "@vaa/proofstore": "*"
+    "@vaa/proofstore": "*",
+    "@vaa/evidence": "*"
   }
 }

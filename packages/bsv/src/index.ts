@@ -70,6 +70,7 @@ export { HeaderChain } from './headerchain.js';
 export {
   MAX_ENVELOPE_PAYLOAD,
   buildScriptDataEnvelope,
+  buildInertDataBranch,
   recognise,
   scriptOpcodes,
   containsOpReturn,

@@ -4,10 +4,21 @@
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "references": [
-    { "path": "../bsv" },
-    { "path": "../merkle" },
-    { "path": "../proofstore" }
+    {
+      "path": "../bsv"
+    },
+    {
+      "path": "../merkle"
+    },
+    {
+      "path": "../proofstore"
+    },
+    {
+      "path": "../evidence"
+    }
   ]
 }

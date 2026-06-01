@@ -28,4 +28,8 @@ export const siblingCountMismatch = (got: number, expected: number): MerkleError
 export type MerkleVerifyReason =
   | { kind: 'SiblingCountMismatch'; got: number; expected: number }
   | { kind: 'RootMismatch' }
-  | { kind: 'RootNotAnchored' };
+  | { kind: 'RootNotAnchored' }
+  | { kind: 'RootNotInTransaction' }
+  | { kind: 'TxNotInBlock' }
+  | { kind: 'HeaderNotInChain' }
+  | { kind: 'InsufficientDepth'; got: number; required: number };
